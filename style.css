@@ -1,0 +1,60 @@
+/* Allgemeine Stile */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #FFCB05;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    color: #2A75BB;
+}
+
+/* Pokémon Karten */
+.pokemon-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.pokemon-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.pokemon-card:hover {
+    transform: scale(1.05);
+}
+
+.pokemon-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+button {
+    background-color: #FFCB05;
+    color: #2A75BB;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    display: block;
+    margin: 20px auto;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #f4a300;
+}
