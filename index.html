@@ -16,6 +16,15 @@
         </section>
         <button id="loadMoreBtn">Mehr Pokémon laden</button>
     </main>
-    <script src="script.js"></script>
+    <!-- Overlay für Pokémon Details -->
+    <div id="pokemonOverlay" class="overlay">
+        <div class="overlay-content">
+            <span id="closeOverlayBtn">&times;</span>
+            <h2 id="overlayName"></h2>
+            <p id="overlayType"></p>
+            <p id="overlayStats"></p>
+        </div>
+    </div>    
+    <script src="script.js" defer></script>
 </body>
 </html>
