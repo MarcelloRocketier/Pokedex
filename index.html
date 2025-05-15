@@ -4,27 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokédex</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon"> <!-- Favicon -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header>
         <h1>Pokédex</h1>
+        <input type="text" id="searchInput" placeholder="Search Pokémon..."> <!-- Search bar -->
     </header>
     <main>
         <section class="pokemon-list">
-            <!-- Pokémon Karten werden hier dynamisch geladen -->
+            <!-- Pokémon cards will be dynamically loaded here -->
         </section>
-        <button id="loadMoreBtn">Mehr Pokémon laden</button>
+        <button id="loadMoreBtn">Load more Pokémon</button>
     </main>
-    <!-- Overlay für Pokémon Details -->
+    <div id="loading" class="loading">Loading...</div> <!-- Loading screen -->
+    
+    <!-- Overlay for Pokémon details -->
     <div id="pokemonOverlay" class="overlay">
         <div class="overlay-content">
             <span id="closeOverlayBtn">&times;</span>
             <h2 id="overlayName"></h2>
             <p id="overlayType"></p>
             <p id="overlayStats"></p>
+            
+            <!-- Navigation arrows -->
+            <div class="overlay-nav">
+                <span id="prevPokemon">←</span>
+                <span id="nextPokemon">→</span>
+            </div>
         </div>
-    </div>    
+    </div>
+    
     <script src="script.js" defer></script>
 </body>
 </html>
