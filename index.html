@@ -1,41 +1,51 @@
+<!-- index.html -->
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokédex</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon"> <!-- Favicon -->
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokédex</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Pokédex</h1>
-        <input type="text" id="searchInput" placeholder="Search Pokémon..."> <!-- Search bar -->
-    </header>
-    <main>
-        <section class="pokemon-list">
-            <!-- Pokémon cards will be dynamically loaded here -->
-        </section>
-        <button id="loadMoreBtn">Load more Pokémon</button>
-    </main>
-    <div id="loading" class="loading">Loading...</div> <!-- Loading screen -->
-    
-    <!-- Overlay for Pokémon details -->
-    <div id="pokemonOverlay" class="overlay">
-        <div class="overlay-content">
-            <span id="closeOverlayBtn">&times;</span>
-            <h2 id="overlayName"></h2>
-            <p id="overlayType"></p>
-            <p id="overlayStats"></p>
-            
-            <!-- Navigation arrows -->
-            <div class="overlay-nav">
-                <span id="prevPokemon">←</span>
-                <span id="nextPokemon">→</span>
-            </div>
-        </div>
+  <header class="site-header">
+    <div class="header-inner">
+      <img src="favicon.ico" alt="Logo" class="logo">
+      <h1 class="site-title">Pokédex</h1>
+      <div class="search-wrapper">
+        <input id="searchInput" type="text" placeholder="Search Pokémon…">
+        <button id="searchBtn" disabled>Search</button>
+      </div>
     </div>
-    
-    <script src="script.js" defer></script>
+  </header>
+
+  <main>
+    <div id="pokemonContainer" class="pokemon-grid"></div>
+    <button id="loadMoreBtn" onclick="loadMore()">Load more Pokémon</button>
+
+    <!-- spinner overlay -->
+    <div id="spinnerOverlay" class="spinner-overlay hidden">
+      <div id="spinner" class="spinner"></div>
+    </div>
+  </main>
+
+  <!-- overlay for details -->
+  <div id="pokemonOverlay" class="overlay" onclick="closeOverlay()">
+    <div class="overlay-content">
+      <img id="overlayImg" class="overlay-img" src="" alt="Pokémon image">
+      <button id="prevBtn" class="nav-btn" onclick="prevPokemon()">‹</button>
+      <div class="overlay-info">
+        <div id="overlayId" class="overlay-id"></div>
+        <h2 id="overlayName"></h2>
+        <p id="overlayType"></p>
+        <div id="overlayStats"></div>
+        <div id="overlayAbilities" class="overlay-abilities"></div>
+      </div>
+      <button id="nextBtn" class="nav-btn" onclick="nextPokemon()">›</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
