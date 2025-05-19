@@ -1,164 +1,187 @@
-// script.js
+// DOM
+var container    = document.getElementById('pokemonContainer');
+var cardTpl      = document.getElementById('card-template').content;
+var overlayTpl   = document.getElementById('overlay-template').content;
+var input        = document.getElementById('search-input');
+var resetBtn     = document.getElementById('reset-button');
+var loadBtn      = document.getElementById('loadMoreBtn');
 
-// element refs
-const pokemonContainer  = document.getElementById('pokemonContainer');
-const loadMoreBtn       = document.getElementById('loadMoreBtn');
-const spinnerOverlay    = document.getElementById('spinnerOverlay');
-const spinner           = document.getElementById('spinner');
-const searchInput       = document.getElementById('searchInput');
-const searchBtn         = document.getElementById('searchBtn');
-const overlay           = document.getElementById('pokemonOverlay');
-const overlayImg        = document.getElementById('overlayImg');
-const overlayId         = document.getElementById('overlayId');
-const overlayName       = document.getElementById('overlayName');
-const overlayType       = document.getElementById('overlayType');
-const overlayStats      = document.getElementById('overlayStats');
-const overlayAbilities  = document.getElementById('overlayAbilities');
+// state
+var pageSize       = 20;
+var offset         = 0;
+var currentList    = [];
+var cache          = {};
+var currentOverlay = 0;
 
-let offset = 0,
-    limit  = 20,
-    currentList = [],
-    currentIndex = 0;
+// start
+loadBatch();
 
-// initial load
-displayPokemon();
-
-// reset view on empty search
-searchInput.oninput = () => {
-  const v = searchInput.value.trim();
-  searchBtn.disabled = v.length < 3;
-  if (!v) {
-    offset = 0;
-    displayPokemon();
-  }
-};
-searchBtn.onclick = () => {
-  const q = searchInput.value.trim().toLowerCase();
-  if (q.length < 3) return;
-  searchPokemon(q);
-};
-function loadMore() {
-  offset += limit;
-  displayPokemon();
+// load next batch
+function loadBatch() {
+  loadBtn.disabled = true;
+  fetchList(pageSize, offset)
+    .then(function(list){
+      list.forEach(function(it){ currentList.push(it); });
+      return renderList(list, currentList.length - list.length);
+    })
+    .then(function(){ offset += pageSize; })
+    .finally(function(){ loadBtn.disabled = false; });
 }
 
-// fetch summary list
-async function loadPokemonList() {
-  const res  = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`);
-  const data = await res.json();
-  return data.results;
+// fetch overview list
+function fetchList(limit, start) {
+  return fetch(
+    'https://pokeapi.co/api/v2/pokemon?limit=' + limit +
+    '&offset=' + start
+  )
+  .then(function(r){ return r.json(); })
+  .then(function(j){ return j.results; })
+  .catch(function(){ alert('Could not load list.'); return []; });
 }
 
-// fetch details
-async function loadPokemonDetails(summary) {
-  const res = await fetch(summary.url);
-  if (!res.ok) throw new Error('Fetch failed');
-  return res.json();
-}
-
-// clear cards
-function clearContainer() {
-  pokemonContainer.innerHTML = '';
+// render small cards
+function renderList(list, startIdx) {
+  var seq = Promise.resolve();
+  list.forEach(function(entry, i){
+    seq = seq.then(function(){
+      return renderCard(entry, startIdx + i);
+    });
+  });
+  return seq;
 }
 
 // render one card
-function displayCard(p, idx) {
-  const c = document.createElement('div');
-  c.className = `pokemon-card type-${p.types[0].type.name}`;
-  c.onclick   = () => showOverlay(idx, p);
-  c.innerHTML = `
-    <div class="pokemon-id">#${p.id}</div>
-    <img src="${p.sprites.front_default}" alt="${p.name}">
-    <h3>${p.name.toUpperCase()}</h3>
-    ${p.types.map(t=>`<span class="type-badge">${t.type.name}</span>`).join('')}
-  `;
-  pokemonContainer.appendChild(c);
-}
+function renderCard(entry, idx) {
+  return new Promise(function(resolve){
+    var key   = entry.name;
+    var clone = document.importNode(cardTpl, true);
+    var card     = clone.querySelector('.pokemon-card');
+    var spinner  = clone.querySelector('.spinner');
+    var img      = clone.querySelector('.pokemon-img');
+    var nameEl   = clone.querySelector('.pokemon-name');
+    var idEl     = clone.querySelector('.pokemon-id');
+    var typesEl  = clone.querySelector('.type-badges');
 
-async function displayPokemon() {
-  // show spinner
-  spinnerOverlay.classList.remove('hidden');
-  clearContainer();
+    card.onclick = function(){ openOverlay(idx); };
 
-  try {
-    const summaries = await loadPokemonList();
-    currentList = summaries;
+    img.onload = function(){
+      spinner.remove();
+      img.style.visibility = 'visible';
+      resolve();
+    };
+    img.onerror = img.onload;
 
-    // fetch all details in parallel
-    const details = await Promise.all(
-      summaries.map(summary => loadPokemonDetails(summary))
-    );
+    container.appendChild(clone);
 
-    // render all cards
-    details.forEach((p, i) => displayCard(p, i));
-  } catch (e) {
-    console.error('Load error:', e);
-    alert('Failed to load.');
-  } finally {
-    // hide spinner
-    spinnerOverlay.classList.add('hidden');
-  }
-}
-
-
-// search local list
-async function searchPokemon(q) {
-  spinnerOverlay.classList.remove('hidden');
-  clearContainer();
-  try {
-    const matches = currentList
-      .map((s,i)=>({s,i}))
-      .filter(o=>o.s.name.includes(q));
-    if (!matches.length) {
-      alert(`No results for "${q}"`);
-      return;
+    function fill(data){
+      img.src = data.sprites.front_default;
+      img.alt = data.name;
+      nameEl.textContent = data.name.toUpperCase();
+      idEl.textContent   = '#' + data.id;
+      typesEl.innerHTML = '';
+      data.types.forEach(function(t){
+        var span = document.createElement('span');
+        span.textContent = t.type.name;
+        typesEl.appendChild(span);
+      });
+      card.setAttribute('data-type', data.types[0].type.name);
     }
-    for (let {s,i} of matches) {
-      const p = await loadPokemonDetails(s);
-      displayCard(p, i);
+
+    if(cache[key]){
+      fill(cache[key]);
+    } else {
+      fetch(entry.url)
+        .then(function(r){ return r.json(); })
+        .then(function(d){ cache[key] = d; fill(d); })
+        .catch(function(){ resolve(); });
     }
-  } catch {
-    alert('Search error');
-  } finally {
-    spinnerOverlay.classList.add('hidden');
-  }
+  });
 }
 
-// show overlay
-function showOverlay(idx, p) {
-  currentIndex = idx;
-  overlayImg.src         = p.sprites.other['official-artwork'].front_default || p.sprites.front_default;
-  overlayId.textContent  = `#${p.id}`;
-  overlayName.textContent= p.name.toUpperCase();
-  overlayType.textContent= `Type: ${p.types.map(t=>t.type.name).join(', ')}`;
-  overlayStats.innerHTML = `
-    <strong>HP:</strong>      ${p.stats.find(s=>s.stat.name==='hp').base_stat}<br>
-    <strong>Attack:</strong>  ${p.stats.find(s=>s.stat.name==='attack').base_stat}<br>
-    <strong>Defense:</strong> ${p.stats.find(s=>s.stat.name==='defense').base_stat}<br>
-    <strong>Sp. Atk:</strong>${p.stats.find(s=>s.stat.name==='special-attack').base_stat}<br>
-    <strong>Speed:</strong>   ${p.stats.find(s=>s.stat.name==='speed').base_stat}
-  `;
-  overlayAbilities.textContent = 'Abilities: ' + p.abilities.map(a=>a.ability.name).join(', ');
+// overlay: open and fill
+function openOverlay(idx){
+  closeOverlay();
+  var clone = document.importNode(overlayTpl, true);
+  document.body.appendChild(clone);
   document.body.classList.add('overlay-open');
-  overlay.style.display = 'flex';
+  currentOverlay = idx;
+  fillOverlay(idx);
 }
 
-// close overlay
-function closeOverlay() {
-  overlay.style.display = 'none';
+function fillOverlay(idx){
+  var data = cache[currentList[idx].name];
+  var o = document.querySelector('.overlay');
+  o.querySelector('.overlay-img').src =
+    (data.sprites.other['official-artwork'].front_default ||
+     data.sprites.front_default);
+  o.querySelector('.overlay-name').textContent =
+    data.name.toUpperCase();
+  o.querySelector('.overlay-id').textContent =
+    '#' + data.id;
+
+  var typesEl = o.querySelector('.overlay-types');
+  typesEl.innerHTML = '';
+  data.types.forEach(function(t){
+    var span = document.createElement('span');
+    span.textContent = t.type.name;
+    typesEl.appendChild(span);
+  });
+
+  var stats = data.stats;
+  o.querySelector('.overlay-stats').innerHTML =
+    'HP: ' + stats.find(s=>s.stat.name==='hp').base_stat +
+    '<br>ATK: ' + stats.find(s=>s.stat.name==='attack').base_stat +
+    '<br>DEF: ' + stats.find(s=>s.stat.name==='defense').base_stat;
+}
+
+function closeOverlay(){
+  var el = document.querySelector('.overlay');
+  if(el) el.remove();
   document.body.classList.remove('overlay-open');
 }
 
-// navigate
-function prevPokemon() {
-  if (currentIndex > 0) {
-    currentIndex--;
-    loadPokemonDetails(currentList[currentIndex]).then(p=>showOverlay(currentIndex,p));
-  }
+// overlay navigation
+function prevOverlay(){
+  var i = (currentOverlay - 1 + currentList.length) % currentList.length;
+  currentOverlay = i;
+  fillOverlay(i);
 }
-function nextPokemon() {
-  if (currentIndex < currentList.length - 1) {
-    currentIndex++;
-    loadPokemonDetails(currentList[currentIndex]).then(p=>showOverlay(currentIndex,p));
-  }
+function nextOverlay(){
+  var i = (currentOverlay + 1) % currentList.length;
+  currentOverlay = i;
+  fillOverlay(i);
+}
+
+// search
+function onSearch(e){
+  e.preventDefault();
+  var term = input.value.trim().toLowerCase();
+  if(!term){ onReset(); return false; }
+  if(term.length < 3){ alert('Enter at least 3 letters.'); return false; }
+  fetchAllNames().then(function(names){
+    var hits = names.filter(function(n){return n.indexOf(term)>-1;});
+    if(!hits.length){ alert('No results.'); return; }
+    currentList = hits.map(function(n){
+      return { name:n, url:'https://pokeapi.co/api/v2/pokemon/'+n };
+    });
+    container.innerHTML='';
+    loadBtn.hidden  = true;
+    resetBtn.hidden = false;
+    renderList(currentList,0);
+  });
+  return false;
+}
+
+// reset
+function onReset(){
+  input.value=''; container.innerHTML='';
+  offset=0; currentList=[]; loadBtn.hidden=false;
+  resetBtn.hidden=true; loadBatch();
+}
+
+// fetch all names
+function fetchAllNames(){
+  return fetch('https://pokeapi.co/api/v2/pokemon?limit=100000')
+    .then(r=>r.json()).then(j=>j.results.map(p=>p.name))
+    .catch(function(){ alert('Could not load names.'); return []; });
 }
