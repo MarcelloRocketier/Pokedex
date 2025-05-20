@@ -1,53 +1,52 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Pokédex</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="favicon.ico">
+  <link rel="icon" href="favicon.ico" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="site-header">
     <div class="header-inner">
-      <img src="favicon.ico" alt="Logo" class="logo">
+      <img src="favicon.ico" alt="Pikachu Logo" class="logo" />
       <h1 class="site-title">Pokédex</h1>
-      <div class="search-wrapper">
-        <form id="search-form" onsubmit="return onSearch(event)">
-          <input type="text" id="search-input" placeholder="Search Pokémon…">
-          <button type="submit">Search</button>
-          <button type="button" id="reset-button" onclick="onReset()" hidden>Reset</button>
-        </form>
-      </div>
+      <form class="search-wrapper" onsubmit="return onSearch(event)">
+        <input id="search-input" type="text" placeholder="Search Pokémon…" />
+        <button id="search-button" type="submit">Search</button>
+      </form>
+      <button id="reset-button" onclick="onReset()" hidden>Reset</button>
     </div>
   </header>
 
   <main id="pokemonContainer"></main>
-
   <button id="loadMoreBtn" onclick="loadBatch()">Load more</button>
 
-  <!-- small card template -->
   <template id="card-template">
-    <div class="pokemon-card" data-type="">
+    <div class="pokemon-card">
       <div class="spinner"></div>
-      <img class="pokemon-img" loading="lazy" alt=""/>
-      <h3 class="pokemon-name">?</h3>
-      <div class="pokemon-id">#?</div>
+      <img class="pokemon-img" style="visibility:hidden" />
+      <div class="pokemon-id"></div>
+      <h3 class="pokemon-name"></h3>
       <div class="type-badges"></div>
     </div>
   </template>
 
-  <!-- overlay for large view -->
   <template id="overlay-template">
     <div class="overlay" onclick="closeOverlay()">
       <div class="overlay-content" onclick="event.stopPropagation()">
         <button class="nav-btn prev-btn" onclick="prevOverlay()">❮</button>
-        <div class="overlay-details">
-          <img class="overlay-img" src="" alt=""/>
-          <div class="overlay-info">
-            <div class="overlay-id">#?</div>
-            <h2 class="overlay-name">?</h2>
-            <div class="overlay-types type-badges"></div>
+        <div class="overlay-inner">
+          <div class="overlay-media">
+            <img class="overlay-img" alt="Pokémon Art" />
+            <div class="overlay-header">
+              <div class="overlay-id"></div>
+              <h2 class="overlay-name"></h2>
+              <div class="overlay-types type-badges"></div>
+            </div>
+          </div>
+          <div class="overlay-body">
             <div class="overlay-stats"></div>
           </div>
         </div>
