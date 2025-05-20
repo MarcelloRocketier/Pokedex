@@ -1,14 +1,14 @@
-const container = document.getElementById('pokemonContainer');
-const cardTpl = document.getElementById('card-template').content;
-const overlayTpl = document.getElementById('overlay-template').content;
-const input = document.getElementById('search-input');
-const resetBtn = document.getElementById('reset-button');
-const loadBtn = document.getElementById('loadMoreBtn');
+const container    = document.getElementById('pokemonContainer');
+const cardTpl      = document.getElementById('card-template').content;
+const overlayTpl   = document.getElementById('overlay-template').content;
+const input        = document.getElementById('search-input');
+const resetBtn     = document.getElementById('reset-button');
+const loadBtn      = document.getElementById('loadMoreBtn');
 
-let pageSize = 20;
-let offset = 0;
-let currentList = [];
-let cache = {};
+let pageSize       = 20;
+let offset         = 0;
+let currentList    = [];
+let cache          = {};
 let currentOverlay = 0;
 
 loadBatch();
@@ -53,7 +53,9 @@ async function renderCard(entry, idx) {
   container.appendChild(card);
 
   let data = cache[key] || await fetchData(entry.url, key);
-  if (data) fillCard(data, img, nameEl, idEl, typesEl, card);
+  if (data) {
+    fillCard(data, img, nameEl, idEl, typesEl, card);
+  }
 }
 
 async function fetchData(url, key) {
@@ -81,9 +83,7 @@ function fillCard(data, img, nameEl, idEl, typesEl, card) {
   card.setAttribute('data-type', data.types[0].type.name);
 }
 
-async function onSearch(e) {
-  e.preventDefault();
-  const term = input.value.trim().toLowerCase();
+function validateSearch(term) {
   if (!term) {
     onReset();
     return false;
@@ -92,11 +92,14 @@ async function onSearch(e) {
     alert('Enter at least 3 letters.');
     return false;
   }
+  return true;
+}
 
+async function performSearch(term) {
   try {
-    const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=100000');
+    const res   = await fetch('https://pokeapi.co/api/v2/pokemon?limit=100000');
     const names = (await res.json()).results.map(p => p.name);
-    const hits = names.filter(n => n.includes(term));
+    const hits  = names.filter(n => n.includes(term));
     if (!hits.length) {
       alert('No results.');
       return false;
@@ -106,7 +109,7 @@ async function onSearch(e) {
       url: `https://pokeapi.co/api/v2/pokemon/${n}`
     }));
     container.innerHTML = '';
-    loadBtn.hidden = true;
+    loadBtn.hidden  = true;
     resetBtn.hidden = false;
     renderList(currentList, 0);
   } catch {
@@ -115,13 +118,20 @@ async function onSearch(e) {
   return false;
 }
 
+async function onSearch(e) {
+  e.preventDefault();
+  const term = input.value.trim().toLowerCase();
+  if (!validateSearch(term)) return false;
+  return await performSearch(term);
+}
+
 function onReset() {
-  input.value = '';
+  input.value         = '';
   container.innerHTML = '';
-  offset = 0;
-  currentList = [];
-  loadBtn.hidden = false;
-  resetBtn.hidden = true;
+  offset              = 0;
+  currentList         = [];
+  loadBtn.hidden      = false;
+  resetBtn.hidden     = true;
   loadBatch();
 }
 
@@ -142,23 +152,23 @@ function fillOverlay(idx) {
 
 function renderOverlayMedia(pokemon) {
   const overlayElement = document.getElementsByClassName('overlay')[0];
-  const imgEl = overlayElement.getElementsByClassName('overlay-img')[0];
-  const idEl = overlayElement.getElementsByClassName('overlay-id')[0];
-  const nameEl = overlayElement.getElementsByClassName('overlay-name')[0];
-  const typesEl = overlayElement.getElementsByClassName('overlay-types')[0];
+  const imgEl    = overlayElement.getElementsByClassName('overlay-img')[0];
+  const idEl     = overlayElement.getElementsByClassName('overlay-id')[0];
+  const nameEl   = overlayElement.getElementsByClassName('overlay-name')[0];
+  const typesEl  = overlayElement.getElementsByClassName('overlay-types')[0];
 
   imgEl.src = pokemon.sprites.other['official-artwork'].front_default
-    || pokemon.sprites.front_default;
-  idEl.textContent = `#${pokemon.id}`;
+              || pokemon.sprites.front_default;
+  idEl.textContent   = `#${pokemon.id}`;
   nameEl.textContent = pokemon.name.toUpperCase();
-  typesEl.innerHTML = pokemon.types
+  typesEl.innerHTML  = pokemon.types
     .map(t => `<span class="type-badge">${t.type.name}</span>`)
     .join('');
 }
 
 function renderOverlayStats(pokemon) {
   const overlayElement = document.getElementsByClassName('overlay')[0];
-  const statsEl = overlayElement.getElementsByClassName('overlay-stats')[0];
+  const statsEl  = overlayElement.getElementsByClassName('overlay-stats')[0];
   statsEl.innerHTML = pokemon.stats
     .map(s => `${s.stat.name.toUpperCase()}: ${s.base_stat}`)
     .join('<br>');
@@ -173,9 +183,7 @@ function closeOverlay() {
 }
 
 function prevOverlay() {
-  openOverlay(
-    (currentOverlay - 1 + currentList.length) % currentList.length
-  );
+  openOverlay((currentOverlay - 1 + currentList.length) % currentList.length);
 }
 function nextOverlay() {
   openOverlay((currentOverlay + 1) % currentList.length);
